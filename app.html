@@ -1383,12 +1383,36 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monosp
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ══════════════════════════════════════
-// SUPABASE CONFIG — replace with your keys
+// ⚠️  REPLACE THESE 2 VALUES WITH YOURS
 // ══════════════════════════════════════
-const SUPABASE_URL = 'YOUR_SUPABASE_URL'       // e.g. https://xxxx.supabase.co
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'  // your anon public key
+var SUPABASE_URL = 'YOUR_SUPABASE_URL'      // https://xxxx.supabase.co
+var SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY' // eyJhbGci...
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+// Global sb — initialized immediately after CDN loads
+var sb = null
+
+window.addEventListener('load', function() {
+  // Init Supabase
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+  // Check existing session
+  sb.auth.getSession().then(function({ data }) {
+    if (data.session) {
+      loadUserProfile(data.session.user)
+      showPage('page-dashboard')
+    } else {
+      showPage('page-auth')
+    }
+  })
+
+  // Listen for auth state changes (Google/GitHub OAuth redirects)
+  sb.auth.onAuthStateChange(function(_event, session) {
+    if (session) {
+      loadUserProfile(session.user)
+      showPage('page-dashboard')
+    }
+  })
+})
 
 // ══════════════════════════════════════
 // TOAST
@@ -1413,26 +1437,6 @@ function goToAuth()      { showPage('page-auth') }
 function goToDashboard() { showPage('page-dashboard') }
 function goToCourse()    { showPage('page-course') }
 
-// ══════════════════════════════════════
-// SESSION CHECK ON LOAD
-// ══════════════════════════════════════
-window.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await sb.auth.getSession()
-  if (session) {
-    loadUserProfile(session.user)
-    goToDashboard()
-  } else {
-    goToAuth()
-  }
-
-  // Listen for auth state changes (e.g. OAuth redirect)
-  sb.auth.onAuthStateChange((_event, session) => {
-    if (session) {
-      loadUserProfile(session.user)
-      goToDashboard()
-    }
-  })
-})
 
 // ══════════════════════════════════════
 // LOAD USER INTO UI
@@ -1454,6 +1458,7 @@ function loadUserProfile(user) {
 // SIGN UP
 // ══════════════════════════════════════
 async function handleSignup() {
+  if (!sb) { toast('Still loading, please wait a second', 'error'); return }
   const email     = document.getElementById('signup-email').value.trim()
   const password  = document.getElementById('signup-password').value
   const firstName = document.getElementById('signup-firstname').value.trim()
@@ -1497,6 +1502,7 @@ async function handleSignup() {
 // SIGN IN
 // ══════════════════════════════════════
 async function handleLogin() {
+  if (!sb) { toast('Still loading, please wait a second', 'error'); return }
   const email    = document.getElementById('login-email').value.trim()
   const password = document.getElementById('login-password').value
 

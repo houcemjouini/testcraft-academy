@@ -762,8 +762,43 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monosp
   .input-row { grid-template-columns: 1fr; }
 }
 </style>
+
+<!-- ── TOAST NOTIFICATION ── -->
+<style>
+.toast {
+  position: fixed; bottom: 2rem; right: 2rem; z-index: 9999;
+  padding: 0.9rem 1.4rem; border-radius: 10px;
+  font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.85rem;
+  display: flex; align-items: center; gap: 0.6rem;
+  transform: translateY(100px); opacity: 0;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none; max-width: 340px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { background: #0f2d1f; border: 1px solid rgba(34,197,94,0.3); color: #22c55e; }
+.toast.error   { background: #2d0f0f; border: 1px solid rgba(239,68,68,0.3);  color: #ef4444; }
+.toast.info    { background: #0f1f2d; border: 1px solid rgba(0,212,170,0.3);  color: #00d4aa; }
+
+.btn-full:disabled {
+  opacity: 0.6; cursor: not-allowed; transform: none !important;
+}
+
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(10,14,26,0.3);
+  border-top-color: #0a0e1a;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle; margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
 </head>
 <body>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
 <!-- ══════════════════════════════════════
      PAGE 1: LOGIN / SIGNUP
@@ -792,21 +827,21 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monosp
       <div class="auth-panel active" id="auth-login">
         <div class="form-group">
           <label class="form-label">Email</label>
-          <input type="email" class="form-input" placeholder="you@example.com">
+          <input type="email" id="login-email" class="form-input" placeholder="you@example.com">
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
-          <input type="password" class="form-input" placeholder="••••••••">
+          <input type="password" id="login-password" class="form-input" placeholder="••••••••">
         </div>
         <div style="text-align:right;margin-bottom:0.5rem">
-          <a style="font-size:0.72rem;color:var(--accent);cursor:pointer">Forgot password?</a>
+          <a style="font-size:0.72rem;color:var(--accent);cursor:pointer" onclick="resetPassword()">Forgot password?</a>
         </div>
-        <button class="btn-full" onclick="goToDashboard()">Sign In →</button>
+        <button class="btn-full" id="btn-login" onclick="handleLogin()">Sign In →</button>
 
         <div class="auth-divider">or continue with</div>
-        <button class="btn-oauth">🌐 &nbsp;Continue with Google</button>
+        <button class="btn-oauth" onclick="handleGoogleLogin()">🌐 &nbsp;Continue with Google</button>
         <div style="margin-top:0.6rem">
-          <button class="btn-oauth">🐙 &nbsp;Continue with GitHub</button>
+          <button class="btn-oauth" onclick="handleGithubLogin()">🐙 &nbsp;Continue with GitHub</button>
         </div>
       </div>
 
@@ -815,31 +850,31 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monosp
         <div class="input-row">
           <div class="form-group">
             <label class="form-label">First Name</label>
-            <input type="text" class="form-input" placeholder="Ahmed">
+            <input type="text" id="signup-firstname" class="form-input" placeholder="Ahmed">
           </div>
           <div class="form-group">
             <label class="form-label">Last Name</label>
-            <input type="text" class="form-input" placeholder="Doe">
+            <input type="text" id="signup-lastname" class="form-input" placeholder="Doe">
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Email</label>
-          <input type="email" class="form-input" placeholder="you@example.com">
+          <input type="email" id="signup-email" class="form-input" placeholder="you@example.com">
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
-          <input type="password" class="form-input" placeholder="Min. 8 characters">
+          <input type="password" id="signup-password" class="form-input" placeholder="Min. 8 characters">
         </div>
         <div class="form-group">
           <label class="form-label">I'm joining as</label>
-          <select class="form-input" style="cursor:pointer">
+          <select id="signup-role" class="form-input" style="cursor:pointer">
             <option>QA Engineer</option>
             <option>Developer</option>
             <option>Student</option>
             <option>Team Lead / Manager</option>
           </select>
         </div>
-        <button class="btn-full" onclick="goToDashboard()">Create Free Account →</button>
+        <button class="btn-full" id="btn-signup" onclick="handleSignup()">Create Free Account →</button>
         <p style="text-align:center;font-size:0.68rem;color:var(--muted);margin-top:0.8rem">
           By signing up you agree to our <a style="color:var(--accent);cursor:pointer">Terms</a> & <a style="color:var(--accent);cursor:pointer">Privacy Policy</a>
         </p>
@@ -872,7 +907,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monosp
     <div class="nav-user">
       <div class="user-avatar">AH</div>
       <div class="user-name">Ahmed</div>
-      <button class="btn-logout" onclick="goToAuth()">Logout</button>
+      <button class="btn-logout" onclick="handleLogout()">Logout</button>
     </div>
   </nav>
 
@@ -1076,7 +1111,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monosp
     <div class="nav-user">
       <div class="user-avatar">AH</div>
       <div class="user-name">Ahmed</div>
-      <button class="btn-logout" onclick="goToAuth()">Logout</button>
+      <button class="btn-logout" onclick="handleLogout()">Logout</button>
     </div>
   </nav>
 
@@ -1344,63 +1379,247 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monosp
     </aside>
   </div>
 </div>
-<script>
-  const supabase = supabase.createClient(
-    'sb_publishable_w2_x6bIWPDvdOf35m6aIYw_RNHO1obV',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVibG5xZm1nc29pemhvdHNndHN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNjU0ODgsImV4cCI6MjA5Mzg0MTQ4OH0.oRCPpMjD1B_0WhbrNX_F2J52KiCupyIZLPLnu1F6Sr8'
-  )
-</script>
-<script>
-// ── Navigation ──
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0);
+
+<script type="module">
+// ══════════════════════════════════════
+// SUPABASE CONFIG — replace with your keys
+// ══════════════════════════════════════
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+const SUPABASE_URL  = 'YOUR_SUPABASE_URL'   // e.g. https://xxxx.supabase.co
+const SUPABASE_KEY  = 'YOUR_SUPABASE_ANON_KEY'
+
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+function toast(msg, type = 'info') {
+  const el = document.getElementById('toast')
+  el.className = `toast ${type} show`
+  el.innerHTML = (type === 'success' ? '✓ ' : type === 'error' ? '✕ ' : 'ℹ ') + msg
+  clearTimeout(window._toastTimer)
+  window._toastTimer = setTimeout(() => el.classList.remove('show'), 4000)
 }
 
-function goToAuth()      { showPage('page-auth'); }
-function goToDashboard() { showPage('page-dashboard'); }
-function goToCourse()    { showPage('page-course'); }
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.getElementById(id).classList.add('active')
+  window.scrollTo(0, 0)
+}
+function goToAuth()      { showPage('page-auth') }
+function goToDashboard() { showPage('page-dashboard') }
+function goToCourse()    { showPage('page-course') }
 
-// ── Auth tabs ──
+// ══════════════════════════════════════
+// SESSION CHECK ON LOAD
+// ══════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await sb.auth.getSession()
+  if (session) {
+    loadUserProfile(session.user)
+    goToDashboard()
+  } else {
+    goToAuth()
+  }
+
+  // Listen for auth state changes (e.g. OAuth redirect)
+  sb.auth.onAuthStateChange((_event, session) => {
+    if (session) {
+      loadUserProfile(session.user)
+      goToDashboard()
+    }
+  })
+})
+
+// ══════════════════════════════════════
+// LOAD USER INTO UI
+// ══════════════════════════════════════
+function loadUserProfile(user) {
+  const meta = user.user_metadata || {}
+  const name = meta.full_name || meta.first_name || user.email.split('@')[0]
+  const initials = name.slice(0, 2).toUpperCase()
+
+  // Update all avatar + name elements
+  document.querySelectorAll('.user-avatar').forEach(el => el.textContent = initials)
+  document.querySelectorAll('.user-name').forEach(el => el.textContent = name)
+  document.querySelectorAll('.dash-welcome h1').forEach(el => {
+    el.textContent = `Good morning, ${name.split(' ')[0]} 👋`
+  })
+}
+
+// ══════════════════════════════════════
+// SIGN UP
+// ══════════════════════════════════════
+async function handleSignup() {
+  const email     = document.getElementById('signup-email').value.trim()
+  const password  = document.getElementById('signup-password').value
+  const firstName = document.getElementById('signup-firstname').value.trim()
+  const lastName  = document.getElementById('signup-lastname').value.trim()
+  const role      = document.getElementById('signup-role').value
+
+  if (!email || !password || !firstName) {
+    toast('Please fill in all required fields', 'error'); return
+  }
+  if (password.length < 8) {
+    toast('Password must be at least 8 characters', 'error'); return
+  }
+
+  const btn = document.getElementById('btn-signup')
+  btn.disabled = true
+  btn.innerHTML = '<span class="spinner"></span> Creating account…'
+
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { first_name: firstName, last_name: lastName, full_name: `${firstName} ${lastName}`, role }
+    }
+  })
+
+  btn.disabled = false
+  btn.textContent = 'Create Free Account →'
+
+  if (error) {
+    toast(error.message, 'error')
+  } else if (data.user && !data.session) {
+    // Email confirmation required
+    toast('✉️ Check your email to confirm your account!', 'info')
+    switchAuthTab('login')
+  } else {
+    toast('Account created! Welcome 🎉', 'success')
+  }
+}
+
+// ══════════════════════════════════════
+// SIGN IN
+// ══════════════════════════════════════
+async function handleLogin() {
+  const email    = document.getElementById('login-email').value.trim()
+  const password = document.getElementById('login-password').value
+
+  if (!email || !password) {
+    toast('Please enter your email and password', 'error'); return
+  }
+
+  const btn = document.getElementById('btn-login')
+  btn.disabled = true
+  btn.innerHTML = '<span class="spinner"></span> Signing in…'
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password })
+
+  btn.disabled = false
+  btn.textContent = 'Sign In →'
+
+  if (error) {
+    toast(error.message, 'error')
+  } else {
+    toast(`Welcome back! 👋`, 'success')
+    loadUserProfile(data.user)
+    setTimeout(goToDashboard, 600)
+  }
+}
+
+// ══════════════════════════════════════
+// GOOGLE LOGIN
+// ══════════════════════════════════════
+async function handleGoogleLogin() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href }
+  })
+  if (error) toast(error.message, 'error')
+}
+
+// ══════════════════════════════════════
+// GITHUB LOGIN
+// ══════════════════════════════════════
+async function handleGithubLogin() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'github',
+    options: { redirectTo: window.location.href }
+  })
+  if (error) toast(error.message, 'error')
+}
+
+// ══════════════════════════════════════
+// FORGOT PASSWORD
+// ══════════════════════════════════════
+async function resetPassword() {
+  const email = document.getElementById('login-email').value.trim()
+  if (!email) { toast('Enter your email above first', 'error'); return }
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '?reset=true'
+  })
+  if (error) toast(error.message, 'error')
+  else toast('Password reset email sent! Check your inbox', 'success')
+}
+
+// ══════════════════════════════════════
+// LOGOUT
+// ══════════════════════════════════════
+async function handleLogout() {
+  await sb.auth.signOut()
+  showPage('page-auth')
+  toast('Signed out successfully', 'info')
+}
+
+// ══════════════════════════════════════
+// AUTH TABS
+// ══════════════════════════════════════
 function switchAuthTab(tab) {
   document.querySelectorAll('.auth-tab').forEach((t, i) => {
-    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
-  });
-  document.getElementById('auth-login').classList.toggle('active', tab === 'login');
-  document.getElementById('auth-signup').classList.toggle('active', tab === 'signup');
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'))
+  })
+  document.getElementById('auth-login').classList.toggle('active', tab === 'login')
+  document.getElementById('auth-signup').classList.toggle('active', tab === 'signup')
 }
 
-// ── Lesson tabs ──
+// ══════════════════════════════════════
+// LESSON TABS
+// ══════════════════════════════════════
 function switchLessonTab(tab) {
-  document.querySelectorAll('.lesson-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.lesson-tab-panel').forEach(p => p.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.lesson-tab').forEach(t => t.classList.remove('active'))
+  document.querySelectorAll('.lesson-tab-panel').forEach(p => p.classList.remove('active'))
+  event.target.classList.add('active')
+  document.getElementById('tab-' + tab).classList.add('active')
 }
 
-// ── Curriculum accordion ──
+// ══════════════════════════════════════
+// CURRICULUM ACCORDION
+// ══════════════════════════════════════
 function toggleModule(header) {
-  const block = header.parentElement;
-  block.classList.toggle('open');
+  header.parentElement.classList.toggle('open')
 }
 
-// ── Animate progress bars on dashboard load ──
+// ══════════════════════════════════════
+// PROGRESS BAR ANIMATIONS
+// ══════════════════════════════════════
 function animateBars() {
   document.querySelectorAll('.progress-bar-fill, .mini-progress-fill, .curr-progress-fill').forEach(bar => {
-    const w = bar.style.width;
-    bar.style.width = '0%';
-    setTimeout(() => { bar.style.width = w; }, 300);
-  });
+    const w = bar.style.width
+    bar.style.width = '0%'
+    setTimeout(() => { bar.style.width = w }, 300)
+  })
 }
 
-// Observe page changes to trigger animations
-const observer = new MutationObserver(() => {
+const _observer = new MutationObserver(() => {
   if (document.getElementById('page-dashboard').classList.contains('active')) {
-    setTimeout(animateBars, 100);
+    setTimeout(animateBars, 100)
   }
-});
-observer.observe(document.body, { subtree: true, attributeFilter: ['class'] });
+})
+_observer.observe(document.body, { subtree: true, attributeFilter: ['class'] })
+
+// ── Expose to global scope (required for onclick= with type="module") ──
+Object.assign(window, {
+  handleLogin, handleSignup, handleGoogleLogin, handleGithubLogin,
+  resetPassword, handleLogout, goToDashboard, goToCourse, goToAuth,
+  switchAuthTab, switchLessonTab, toggleModule
+})
 </script>
 </body>
 </html>

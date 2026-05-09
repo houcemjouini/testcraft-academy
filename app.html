@@ -1380,37 +1380,65 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monosp
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ══════════════════════════════════════
 // ⚠️  REPLACE THESE 2 VALUES WITH YOURS
 // ══════════════════════════════════════
-var SUPABASE_URL = 'sb_publishable_w2_x6bIWPDvdOf35m6aIYw_RNHO1obV'      // https://xxxx.supabase.co
-var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVibG5xZm1nc29pemhvdHNndHN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNjU0ODgsImV4cCI6MjA5Mzg0MTQ4OH0.oRCPpMjD1B_0WhbrNX_F2J52KiCupyIZLPLnu1F6Sr8' // eyJhbGci...
+var SUPABASE_URL = 'YOUR_SUPABASE_URL'      // https://xxxx.supabase.co
+var SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY' // eyJhbGci...
 
-// Global sb — initialized immediately after CDN loads
+// ══════════════════════════════════════
+// LOAD SUPABASE DYNAMICALLY THEN INIT
+// ══════════════════════════════════════
 var sb = null
 
-window.addEventListener('load', function() {
-  // Init Supabase
-  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-
-  // Check existing session
-  sb.auth.getSession().then(function({ data }) {
-    if (data.session) {
-      loadUserProfile(data.session.user)
-      showPage('page-dashboard')
-    } else {
-      showPage('page-auth')
+function loadSupabase(callback) {
+  var script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
+  script.onload = function() {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+    callback()
+  }
+  script.onerror = function() {
+    // Fallback to unpkg if jsdelivr fails
+    var script2 = document.createElement('script')
+    script2.src = 'https://unpkg.com/@supabase/supabase-js@2'
+    script2.onload = function() {
+      sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+      callback()
     }
-  })
-
-  // Listen for auth state changes (Google/GitHub OAuth redirects)
-  sb.auth.onAuthStateChange(function(_event, session) {
-    if (session) {
-      loadUserProfile(session.user)
-      showPage('page-dashboard')
+    script2.onerror = function() {
+      alert('Network error: could not load Supabase. Check your internet connection.')
     }
+    document.head.appendChild(script2)
+  }
+  document.head.appendChild(script)
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Show auth page immediately while Supabase loads
+  document.querySelectorAll('.page').forEach(function(p) { p.style.display = 'none' })
+  document.getElementById('page-auth').style.display = 'flex'
+
+  loadSupabase(function() {
+    // Supabase is ready — check for existing session
+    sb.auth.getSession().then(function(result) {
+      var session = result.data.session
+      if (session) {
+        loadUserProfile(session.user)
+        showPage('page-dashboard')
+      } else {
+        showPage('page-auth')
+      }
+    })
+
+    // Handle OAuth redirects (Google / GitHub)
+    sb.auth.onAuthStateChange(function(_event, session) {
+      if (session) {
+        loadUserProfile(session.user)
+        showPage('page-dashboard')
+      }
+    })
   })
 })
 
@@ -1458,7 +1486,7 @@ function loadUserProfile(user) {
 // SIGN UP
 // ══════════════════════════════════════
 async function handleSignup() {
-  if (!sb) { toast('Still loading, please wait a second', 'error'); return }
+  if (!sb) { toast('Connecting to server, please try again in 2 seconds…', 'info'); return }
   const email     = document.getElementById('signup-email').value.trim()
   const password  = document.getElementById('signup-password').value
   const firstName = document.getElementById('signup-firstname').value.trim()
@@ -1502,7 +1530,7 @@ async function handleSignup() {
 // SIGN IN
 // ══════════════════════════════════════
 async function handleLogin() {
-  if (!sb) { toast('Still loading, please wait a second', 'error'); return }
+  if (!sb) { toast('Connecting to server, please try again in 2 seconds…', 'info'); return }
   const email    = document.getElementById('login-email').value.trim()
   const password = document.getElementById('login-password').value
 

@@ -1380,16 +1380,15 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monosp
   </div>
 </div>
 
-<script type="module">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
 // ══════════════════════════════════════
 // SUPABASE CONFIG — replace with your keys
 // ══════════════════════════════════════
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+const SUPABASE_URL = 'YOUR_SUPABASE_URL'       // e.g. https://xxxx.supabase.co
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'  // your anon public key
 
-const SUPABASE_URL  = 'sb_publishable_w2_x6bIWPDvdOf35m6aIYw_RNHO1obV'   // e.g. https://xxxx.supabase.co
-const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVibG5xZm1nc29pemhvdHNndHN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNjU0ODgsImV4cCI6MjA5Mzg0MTQ4OH0.oRCPpMjD1B_0WhbrNX_F2J52KiCupyIZLPLnu1F6Sr8'
-
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY)
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
 // ══════════════════════════════════════
 // TOAST
@@ -1613,13 +1612,6 @@ const _observer = new MutationObserver(() => {
   }
 })
 _observer.observe(document.body, { subtree: true, attributeFilter: ['class'] })
-
-// ── Expose to global scope (required for onclick= with type="module") ──
-Object.assign(window, {
-  handleLogin, handleSignup, handleGoogleLogin, handleGithubLogin,
-  resetPassword, handleLogout, goToDashboard, goToCourse, goToAuth,
-  switchAuthTab, switchLessonTab, toggleModule
-})
 </script>
 </body>
 </html>
